@@ -81,12 +81,11 @@
       });
 
       document.getElementById('searchBtn').addEventListener('click', () => {
-        const selectedInspector = select.value.trim();
         const shopCode = shopInput.value.trim();
         result.innerHTML = '';
 
-        if (!selectedInspector || !shopCode) {
-          result.textContent = 'กรุณาเลือกชื่อผู้ตรวจและกรอกรหัสร้าน';
+        if (!shopCode) {
+          result.textContent = 'กรุณากรอกรหัสร้าน';
           return;
         }
 
@@ -143,3 +142,4 @@
   <div id="result"></div>
 </body>
 </html>
+
