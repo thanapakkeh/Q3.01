@@ -22,7 +22,7 @@
       font-weight: bold;
       color: #333;
     }
-    select, input[type="text"] {
+    input[type="text"] {
       width: 100%;
       max-width: 300px;
       padding: 10px;
@@ -65,20 +65,11 @@
     }
   </style>
   <script type="module">
-    import inspectors from './inspectors.js';
     import allData from './full_excel_data.js';
 
     window.onload = () => {
-      const select = document.getElementById('inspectorSelect');
       const shopInput = document.getElementById('shopCode');
       const result = document.getElementById('result');
-
-      inspectors.forEach(name => {
-        const option = document.createElement('option');
-        option.value = name;
-        option.textContent = name;
-        select.appendChild(option);
-      });
 
       document.getElementById('searchBtn').addEventListener('click', () => {
         const shopCode = shopInput.value.trim();
@@ -102,26 +93,27 @@
           });
         });
 
-        const outputSet = new Set();
+        const counts = {};
+        inspectorsFound.forEach(name => {
+          const first = name.split(' ')[0];
+          counts[first] = (counts[first] || 0) + 1;
+        });
+
         inspectorsFound.forEach(name => {
           const nameEl = document.createElement('div');
           nameEl.classList.add('inspector-entry');
-          const nameOnly = name.split(' ')[0];
-          const matchedByNameOnly = inspectorsFound.filter(n => n.startsWith(nameOnly));
-          const isDuplicate = matchedByNameOnly.length > 1;
+          const first = name.split(' ')[0];
+          const isDuplicate = counts[first] > 1;
 
-          nameEl.textContent = isDuplicate ? `${name} (ซ้ำ)` : nameOnly;
+          nameEl.textContent = isDuplicate ? `${name} (ซ้ำ)` : first;
           if (isDuplicate) {
             nameEl.classList.add('duplicate');
           }
 
-          if (!outputSet.has(nameEl.textContent)) {
-            result.appendChild(nameEl);
-            outputSet.add(nameEl.textContent);
-          }
+          result.appendChild(nameEl);
         });
 
-        if (outputSet.size === 0) {
+        if (inspectorsFound.length === 0) {
           result.textContent = 'ไม่พบข้อมูลผู้ตรวจในรหัสร้านนี้ภายใน 12 เดือน';
         }
       });
@@ -130,15 +122,9 @@
 </head>
 <body>
   <h2>ระบบค้นหาผู้ตรวจตามรหัสร้าน</h2>
-  <label for="inspectorSelect">เลือกชื่อผู้ตรวจ:</label>
-  <select id="inspectorSelect">
-    <option value="">-- เลือกชื่อ --</option>
-  </select>
-
   <label for="shopCode">กรอกรหัสร้าน:</label>
   <input type="text" id="shopCode" />
   <button id="searchBtn">ค้นหา</button>
-
   <div id="result"></div>
 </body>
 </html>
