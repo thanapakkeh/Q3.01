@@ -4,6 +4,66 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ค้นหาผู้ตรวจ</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #f0f4ff, #dff0ff);
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h2 {
+      color: #004080;
+    }
+    label {
+      margin-top: 10px;
+      font-weight: bold;
+      color: #333;
+    }
+    select, input[type="text"] {
+      width: 100%;
+      max-width: 300px;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background-color: #0078d7;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    button:hover {
+      background-color: #005fa3;
+    }
+    #result {
+      margin-top: 30px;
+      width: 100%;
+      max-width: 400px;
+      background-color: white;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      color: #222;
+    }
+    .duplicate {
+      color: red;
+      font-weight: bold;
+      font-size: 1.5rem;
+    }
+    .inspector-entry {
+      padding: 5px 0;
+    }
+  </style>
   <script type="module">
     import inspectors from './inspectors.js';
     import allData from './full_excel_data.js';
@@ -13,7 +73,6 @@
       const shopInput = document.getElementById('shopCode');
       const result = document.getElementById('result');
 
-      // ใส่รายชื่อผู้ตรวจใน dropdown
       inspectors.forEach(name => {
         const option = document.createElement('option');
         option.value = name;
@@ -31,19 +90,15 @@
           return;
         }
 
-        // หา record ที่มีรหัสร้านตรงกันภายใน 12 เดือน
         const records = allData.filter(row => {
           return Object.values(row).some(value => value == shopCode);
         });
 
-        // ดึงชื่อผู้ตรวจจาก record เหล่านั้น
         const inspectorsFound = [];
         records.forEach(row => {
-          Object.values(row).forEach(val => {
-            if (typeof val === 'string' && val.trim()) {
-              if (val.includes(' ') && !val.includes('/') && val !== shopCode) {
-                inspectorsFound.push(val.trim());
-              }
+          Object.entries(row).forEach(([key, val]) => {
+            if (typeof val === 'string' && val.trim() && key.includes('ผู้ตรวจ')) {
+              inspectorsFound.push(val.trim());
             }
           });
         });
@@ -51,16 +106,14 @@
         const outputSet = new Set();
         inspectorsFound.forEach(name => {
           const nameEl = document.createElement('div');
+          nameEl.classList.add('inspector-entry');
           const nameOnly = name.split(' ')[0];
           const matchedByNameOnly = inspectorsFound.filter(n => n.startsWith(nameOnly));
           const isDuplicate = matchedByNameOnly.length > 1;
 
           nameEl.textContent = isDuplicate ? `${name} (ซ้ำ)` : nameOnly;
-
           if (isDuplicate) {
-            nameEl.style.color = 'red';
-            nameEl.style.fontWeight = 'bold';
-            nameEl.style.fontSize = '1.5rem';
+            nameEl.classList.add('duplicate');
           }
 
           if (!outputSet.has(nameEl.textContent)) {
@@ -70,7 +123,7 @@
         });
 
         if (outputSet.size === 0) {
-          result.textContent = 'ไม่พบข้อมูลผู้ตรวจในรหัสร้านนี้';
+          result.textContent = 'ไม่พบข้อมูลผู้ตรวจในรหัสร้านนี้ภายใน 12 เดือน';
         }
       });
     }
@@ -83,12 +136,10 @@
     <option value="">-- เลือกชื่อ --</option>
   </select>
 
-  <br/><br/>
-
   <label for="shopCode">กรอกรหัสร้าน:</label>
   <input type="text" id="shopCode" />
   <button id="searchBtn">ค้นหา</button>
 
-  <div id="result" style="margin-top: 20px;"></div>
+  <div id="result"></div>
 </body>
 </html>
