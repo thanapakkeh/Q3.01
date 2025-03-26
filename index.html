@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ค้นหาผู้ตรวจ</title>
+  <script type="module">
+    import inspectors from './inspectors.js';
+    import allData from './full_excel_data.js';
+
+    window.onload = () => {
+      const select = document.getElementById('inspectorSelect');
+      const shopInput = document.getElementById('shopCode');
+      const result = document.getElementById('result');
+
+      // ใส่รายชื่อผู้ตรวจใน dropdown
+      inspectors.forEach(name => {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        select.appendChild(option);
+      });
+
+      document.getElementById('searchBtn').addEventListener('click', () => {
+        const selectedInspector = select.value.trim();
+        const shopCode = shopInput.value.trim();
+        result.innerHTML = '';
+
+        if (!selectedInspector || !shopCode) {
+          result.textContent = 'กรุณาเลือกชื่อผู้ตรวจและกรอกรหัสร้าน';
+          return;
+        }
+
+        // หา record ที่มีรหัสร้านตรงกันภายใน 12 เดือน
+        const records = allData.filter(row => {
+          return Object.values(row).some(value => value == shopCode);
+        });
+
+        // ดึงชื่อผู้ตรวจจาก record เหล่านั้น
+        const inspectorsFound = [];
+        records.forEach(row => {
+          Object.values(row).forEach(val => {
+            if (typeof val === 'string' && val.trim()) {
+              if (val.includes(' ') && !val.includes('/') && val !== shopCode) {
+                inspectorsFound.push(val.trim());
+              }
+            }
+          });
+        });
+
+        const outputSet = new Set();
+        inspectorsFound.forEach(name => {
+          const nameEl = document.createElement('div');
+          const nameOnly = name.split(' ')[0];
+          const matchedByNameOnly = inspectorsFound.filter(n => n.startsWith(nameOnly));
+          const isDuplicate = matchedByNameOnly.length > 1;
+
+          nameEl.textContent = isDuplicate ? `${name} (ซ้ำ)` : nameOnly;
+
+          if (isDuplicate) {
+            nameEl.style.color = 'red';
+            nameEl.style.fontWeight = 'bold';
+            nameEl.style.fontSize = '1.5rem';
+          }
+
+          if (!outputSet.has(nameEl.textContent)) {
+            result.appendChild(nameEl);
+            outputSet.add(nameEl.textContent);
+          }
+        });
+
+        if (outputSet.size === 0) {
+          result.textContent = 'ไม่พบข้อมูลผู้ตรวจในรหัสร้านนี้';
+        }
+      });
+    }
+  </script>
+</head>
+<body>
+  <h2>ระบบค้นหาผู้ตรวจตามรหัสร้าน</h2>
+  <label for="inspectorSelect">เลือกชื่อผู้ตรวจ:</label>
+  <select id="inspectorSelect">
+    <option value="">-- เลือกชื่อ --</option>
+  </select>
+
+  <br/><br/>
+
+  <label for="shopCode">กรอกรหัสร้าน:</label>
+  <input type="text" id="shopCode" />
+  <button id="searchBtn">ค้นหา</button>
+
+  <div id="result" style="margin-top: 20px;"></div>
+</body>
+</html>
